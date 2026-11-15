@@ -71,7 +71,12 @@ def _ordered(findings: list[Finding]) -> list[Finding]:
 
 
 def render_text(
-    manifest: Manifest, findings: list[Finding], *, color: bool = False, only_flagged: bool = False
+    manifest: Manifest,
+    findings: list[Finding],
+    *,
+    color: bool = False,
+    only_flagged: bool = False,
+    details: list[tuple[str, str]] | None = None,
 ) -> str:
     by_tool: dict[str | None, list[Finding]] = {}
     for finding in findings:
@@ -85,6 +90,7 @@ def render_text(
     if manifest.command:
         lines.append(f"  launch   {' '.join(manifest.command)}")
     lines.append(f"  tools    {len(manifest.tools)}")
+    lines += [f"  {label:<8} {value}" for label, value in details or []]
 
     if None in by_tool:
         lines += ["", _paint("x", "31", color) + " " + _paint("server", "1", color)]
@@ -116,13 +122,14 @@ def render_text(
     return "\n".join(lines)
 
 
-def render_json(manifest: Manifest, findings: list[Finding]) -> str:
+def render_json(manifest: Manifest, findings: list[Finding], extra: dict | None = None) -> str:
     return json.dumps(
         {
             "gauntlet": __version__,
             "server": {"name": manifest.server_name, "version": manifest.server_version},
             "command": manifest.command,
             "tools": len(manifest.tools),
+            **(extra or {}),
             "grade": grade(findings),
             "summary": counts(findings),
             "findings": [f.to_dict() for f in _ordered(findings)],

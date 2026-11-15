@@ -94,7 +94,7 @@ def test_demo(capsys):
 def test_rules_lists_every_rule(capsys):
     assert main(["rules"]) == EXIT_OK
     lines = capsys.readouterr().out.strip().splitlines()
-    assert len(lines) == 29
+    assert len(lines) == 34
     assert lines[0].startswith("GA-C001")
 
 

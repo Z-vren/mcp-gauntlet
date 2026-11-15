@@ -176,17 +176,32 @@ class StdioClient:
                 break
         return tools
 
+    def call_tool(self, name: str, arguments: dict) -> str:
+        """Really invoke a tool on the server and return its result as text."""
+        result = self.request("tools/call", {"name": name, "arguments": arguments})
+        parts = [
+            str(block.get("text", "")) if block.get("type") == "text" else f"[{block.get('type', 'content')}]"
+            for block in result.get("content") or []
+            if isinstance(block, dict)
+        ]
+        text = "\n".join(parts)
+        return f"error: {text}" if result.get("isError") else text
+
+    def read_manifest(self) -> Manifest:
+        """Handshake and enumerate tools on an open connection."""
+        init = self.initialize()
+        tools = self.list_tools()
+        info = init.get("serverInfo") if isinstance(init.get("serverInfo"), dict) else {}
+        return Manifest(
+            tools=[Tool(t) for t in tools],
+            server_name=str(info.get("name", "")),
+            server_version=str(info.get("version", "")),
+            instructions=str(init.get("instructions") or ""),
+            command=list(self.command),
+        )
+
 
 def fetch_manifest(command: list[str], env: dict[str, str] | None = None, timeout: float = 20.0) -> Manifest:
     """Launch a stdio MCP server and return what it advertises."""
     with StdioClient(command, env=env, timeout=timeout) as client:
-        init = client.initialize()
-        tools = client.list_tools()
-    info = init.get("serverInfo") if isinstance(init.get("serverInfo"), dict) else {}
-    return Manifest(
-        tools=[Tool(t) for t in tools],
-        server_name=str(info.get("name", "")),
-        server_version=str(info.get("version", "")),
-        instructions=str(init.get("instructions") or ""),
-        command=list(command),
-    )
+        return client.read_manifest()

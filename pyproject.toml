@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcp-gauntlet"
-version = "0.1.0"
-description = "Security scanner for MCP servers: lint tool manifests for prompt injection and pin them against rug pulls."
+version = "0.2.0"
+description = "Security scanner for MCP servers: lint tool manifests for prompt injection, pin them against rug pulls, and test them against a live agent."
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{ name = "Z-vren" }]
 keywords = ["mcp", "model-context-protocol", "security", "prompt-injection", "llm", "agents"]
 classifiers = [
@@ -24,6 +24,8 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+# Only needed for --model anthropic:... ; every other backend is standard library.
+anthropic = ["anthropic"]
 
 [project.scripts]
 gauntlet = "mcp_gauntlet.cli:main"
@@ -31,6 +33,9 @@ mcp-gauntlet = "mcp_gauntlet.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+mcp_gauntlet = ["arena/*.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
